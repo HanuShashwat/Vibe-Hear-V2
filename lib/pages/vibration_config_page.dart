@@ -40,6 +40,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
       "vibration_${widget.triggerWord}",
       _pattern.map((e) => e.toString()).toList(),
     );
+    if(!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Saved for '${widget.triggerWord}'")),
     );
@@ -63,7 +64,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
   }
 
   Future<void> _testPattern() async {
-    final supported = await Vibration.hasVibrator() ?? false;
+    final supported = await Vibration.hasVibrator();
     if (supported) {
       final formattedPattern = [0];
       for (final ms in _pattern) {
@@ -81,7 +82,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
     return Scaffold(
       backgroundColor: blueTone,
       appBar: AppBar(
-        title: Text('${widget.triggerWord}'),
+        title: Text(widget.triggerWord),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0,

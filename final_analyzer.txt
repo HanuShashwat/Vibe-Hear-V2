@@ -1,0 +1,9 @@
+Analyzing Hear_Vibe...                                          
+
+   info - Constructors in '@immutable' classes should be declared as 'const' - lib\components\bottom_nav_bar.dart:6:3 - prefer_const_constructors_in_immutables
+   info - The private field _enabledStatus could be 'final' - lib\pages\home_page.dart:34:21 - prefer_final_fields
+   info - 'partialResults' is deprecated and shouldn't be used. Use SpeechListenOptions.partialResults instead - lib\pages\home_page.dart:118:7 - deprecated_member_use
+   info - 'cancelOnError' is deprecated and shouldn't be used. Use SpeechListenOptions.cancelOnError instead - lib\pages\home_page.dart:119:7 - deprecated_member_use
+   info - 'listenMode' is deprecated and shouldn't be used. Use SpeechListenOptions.listenMode instead - lib\pages\home_page.dart:120:7 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\pages\vibration_config_page.dart:44:26 - use_build_context_synchronously
+

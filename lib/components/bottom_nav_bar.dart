@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 class BottomNavBar extends StatelessWidget {
-  void Function(int)? onTabChange;
-  BottomNavBar({super.key, required this.onTabChange});
+  final void Function(int)? onTabChange;
+  const BottomNavBar({super.key, required this.onTabChange});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: GNav(
+    return GNav(
         color: Colors.grey[500],
         activeColor: Color.fromRGBO(8, 129, 208, 1),
         tabActiveBorder: Border.all(
@@ -35,7 +34,6 @@ class BottomNavBar extends StatelessWidget {
               text: ' Transcript',
             ),
           ],
-      )
-    );
+      );
   }
 }

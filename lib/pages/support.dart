@@ -291,7 +291,7 @@ class Support extends StatelessWidget {
 
               Align(
                 alignment: Alignment.bottomCenter,
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   child: Image.asset(
                     'lib/images/service.png',

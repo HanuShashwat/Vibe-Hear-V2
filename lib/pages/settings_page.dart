@@ -34,6 +34,7 @@ class SettingsPage extends StatelessWidget {
     for (final key in ['Emergency', 'Come Here', 'Help Me']) {
       await prefs.remove('vibration_$key');
     }
+    if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Vibration patterns cleared")),
     );

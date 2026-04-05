@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:vibehear/pages/home.dart';
-import 'package:vibehear/pages/intro_page.dart';
 import 'package:vibehear/pages/support.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -336,6 +335,8 @@ class _SetupPageState extends State<SetupPage> {
                   await prefs.setString('lastName', lastName);
                   await prefs.setString('nickName', nickName);
                   await prefs.setBool('isFirstTime', false);
+
+                  if (!context.mounted) return;
 
                   // Navigation to Home Screen
                   Navigator.push(
