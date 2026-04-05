@@ -12,6 +12,7 @@ class SettingsPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text("Are you sure?"),
         content: const Text("This will erase all saved preferences and restart the app."),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text("Cancel")),
           TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text("Confirm", style: TextStyle(color: Colors.red))),
@@ -31,7 +32,8 @@ class SettingsPage extends StatelessWidget {
 
   Future<void> _clearVibrationPatterns(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    for (final key in ['Emergency', 'Come Here', 'Help Me']) {
+    final savedKeywords = prefs.getStringList('custom_keywords') ?? [];
+    for (final key in savedKeywords) {
       await prefs.remove('vibration_$key');
     }
     if (!context.mounted) return;
@@ -42,65 +44,63 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color blueTone = const Color.fromRGBO(242, 250, 255, 1);
     return Scaffold(
-      backgroundColor: blueTone,
       appBar: AppBar(
         title: const Text("Settings"),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 30),
-
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: blueTone,
-                border: Border.all(color: Colors.red, width: 2),
-                borderRadius: BorderRadius.circular(12),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 28),
+                          SizedBox(width: 8),
+                          Text(
+                            "Danger Zone",
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () => _clearAllData(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                        child: const Text("Clear All App Data"),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => _clearVibrationPatterns(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent, width: 2),
+                          elevation: 0,
+                          minimumSize: const Size.fromHeight(56),
+                        ),
+                        child: const Text("Reset Vibration Patterns"),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              child: Column(
-                children: [
-                  const Text(
-                    "⚠️ Danger Zone",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: () => _clearAllData(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text("Clear All App Data"),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => _clearVibrationPatterns(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(50),
-                    ),
-                    child: const Text("Reset Vibration Patterns"),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

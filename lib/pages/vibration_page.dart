@@ -14,8 +14,6 @@ class _VibrationPageState extends State<VibrationPage> {
   Map<String, bool> enabledStatus = {};
   final TextEditingController _keywordController = TextEditingController();
 
-  final Color blueTone = const Color.fromRGBO(242, 250, 255, 1);
-
   @override
   void initState() {
     super.initState();
@@ -33,7 +31,6 @@ class _VibrationPageState extends State<VibrationPage> {
       }
     });
 
-    // Save default list back if it hasn't been saved yet
     if (prefs.getStringList('custom_keywords') == null) {
       await prefs.setStringList('custom_keywords', savedKeywords);
     }
@@ -75,12 +72,14 @@ class _VibrationPageState extends State<VibrationPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Add Custom Keyword"),
+        title: const Text("Custom Keyword"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         content: TextField(
           controller: _keywordController,
-          decoration: const InputDecoration(hintText: "Enter keyword or phrase"),
+          decoration: const InputDecoration(hintText: "Enter phrase..."),
           textCapitalization: TextCapitalization.words,
         ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -91,6 +90,9 @@ class _VibrationPageState extends State<VibrationPage> {
                _addKeyword();
                Navigator.pop(context);
              },
+             style: ElevatedButton.styleFrom(
+               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
+             ),
              child: const Text("Add"),
           ),
         ],
@@ -107,65 +109,95 @@ class _VibrationPageState extends State<VibrationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: blueTone,
       appBar: AppBar(
-        title: const Text("Trigger Words", style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: blueTone,
-        foregroundColor: Colors.blue,
+        title: const Text("Trigger Words"),
+        centerTitle: false,
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: const Text(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Text(
               "Add custom phrases. When the app is listening and hears one of these, it will vibrate using the specific pattern you set.",
-              style: TextStyle(color: Colors.grey, fontSize: 15),
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 16, height: 1.4),
             ),
           ),
           Expanded(
             child: triggerWords.isEmpty 
-              ? const Center(child: Text("No trigger words added yet.\nPress '+' to add.", textAlign: TextAlign.center))
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.mic_off_outlined, size: 64, color: Colors.grey.shade400),
+                      const SizedBox(height: 16),
+                      const Text("No trigger words added yet.\nPress '+' to add.", textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Color(0xFF94A3B8))),
+                    ],
+                  )
+                )
               : ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               itemCount: triggerWords.length,
               itemBuilder: (context, index) {
                 final word = triggerWords[index];
                 final isEnabled = enabledStatus[word] ?? true;
 
-                return Card(
-                  color: Colors.white,
-                  elevation: 2,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  child: ListTile(
-                    title: Text(word, style: const TextStyle(fontSize: 18)),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Switch(
-                          value: isEnabled,
-                          activeThumbColor: Colors.blue,
-                          onChanged: (value) async {
-                            setState(() {
-                              enabledStatus[word] = value;
-                            });
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool('enabled_$word', value);
-                          },
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Card(
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VibrationConfigPage(triggerWord: word),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.spellcheck, color: Color(0xFF6366F1)),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                word, 
+                                style: const TextStyle(
+                                  fontSize: 18, 
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF1E293B)
+                                )
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: isEnabled,
+                              activeTrackColor: const Color(0xFF6366F1).withValues(alpha: 0.5),
+                              activeThumbColor: const Color(0xFF6366F1),
+                              onChanged: (value) async {
+                                setState(() {
+                                  enabledStatus[word] = value;
+                                });
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setBool('enabled_$word', value);
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                              onPressed: () => _deleteKeyword(word),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () => _deleteKeyword(word),
-                        ),
-                      ],
+                      ),
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => VibrationConfigPage(triggerWord: word),
-                        ),
-                      );
-                    },
                   ),
                 );
               },
@@ -175,8 +207,9 @@ class _VibrationPageState extends State<VibrationPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddDialog,
-        backgroundColor: Colors.blue,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: const Color(0xFF6366F1),
+        elevation: 4,
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
     );
   }

@@ -8,7 +8,6 @@ class Support extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(242, 250, 255, 1),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

@@ -1,94 +1,112 @@
 import 'package:flutter/material.dart';
 import 'package:vibehear/pages/setup_page.dart';
 
-class IntroPage extends StatelessWidget {
+class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
 
   @override
+  State<IntroPage> createState() => _IntroPageState();
+}
+
+class _IntroPageState extends State<IntroPage> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(242, 250, 255, 1),
-      body: Center(
-        child: Column(
-          children: [
-
-            const SizedBox(height: 90),
-
-            // logo
-            Padding(
-              padding: const EdgeInsets.only(
-                  top: 25.0,
-                left: 25.0,
-                right: 30.0,
-              ),
-              child: Image.asset(
-                  'lib/images/logo_vibe_hear.png',
-                height: 200,
-              ),
-            ),
-
-            // title
-            Center(
-              child: Text(
-                  'Vibe Hear',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 52,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 150),
-
-            // subtitle
-            Center(
-              child: Text(
-                textAlign: TextAlign.center,
-                  "Feel the Sound\nStay Connected",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 28,
-                  color: Colors.grey[600],
-                  height: 1.2,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 38),
-
-            // start now button
-            GestureDetector(
-              onTap: () => Navigator.push(
-                  context, MaterialPageRoute(
-                  builder: (context) => SetupPage()
-              ),
-              ),
-              child: Center(
-                child: Container(
-                  width: 280,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Color.fromRGBO(8, 129, 208, 1)
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Center(
-                      child: Text(
-                        'Get Started',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white
-                        ),
-                      ),
+      body: Container(
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE0E7FF), Color(0xFFF1F5F9)], // Indigo 100 to Slate 100
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(flex: 2),
+              // logo
+              TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.elasticOut,
+                builder: (context, val, child) {
+                  return Transform.scale(
+                    scale: val,
+                    child: child,
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 40.0),
+                  child: Hero(
+                    tag: 'app_logo',
+                    child: Image.asset(
+                      'lib/images/logo_vibe_hear.png',
+                      height: 180,
                     ),
                   ),
                 ),
               ),
-            )
-          ],
+              const SizedBox(height: 40),
+              // title
+              const Text(
+                'Vibe Hear',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 52,
+                  color: Color(0xFF0F172A), // Slate 900
+                  letterSpacing: -1,
+                ),
+              ),
+              const SizedBox(height: 12),
+              // subtitle
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 40),
+                child: Text(
+                  "Feel the Sound\nStay Connected",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 24,
+                    color: Color(0xFF64748B), // Slate 500
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              const Spacer(flex: 3),
+              // start now button
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 64,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pushReplacement(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (context, anim, secAnim) => const SetupPage(),
+                        transitionsBuilder: (context, anim, secAnim, child) {
+                          return FadeTransition(opacity: anim, child: child);
+                        },
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 8,
+                      shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.5),
+                    ),
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

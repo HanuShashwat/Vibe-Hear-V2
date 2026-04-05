@@ -27,8 +27,6 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-
-  // bottom nav bar control
   int _selectedIndex = 0;
 
   void navigateBottomBar(int index) {
@@ -37,13 +35,11 @@ class _HomeState extends State<Home> {
     });
   }
 
-  // pages to display
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-
     _pages = [
       HomePage(
         firstName: widget.firstName,
@@ -56,125 +52,102 @@ class _HomeState extends State<Home> {
     ];
   }
 
+  ListTile _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required Widget page,
+    required BuildContext context,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: const Color(0xFF64748B)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Color(0xFF334155),
+          fontWeight: FontWeight.w600,
+          fontSize: 16,
+        ),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      onTap: () {
+        Navigator.pop(context); // close drawer
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(
-        onTabChange: (index) => navigateBottomBar(index),
+        onTabChange: navigateBottomBar,
       ),
       body: _pages[_selectedIndex],
-      backgroundColor: Color.fromRGBO(242, 250, 255, 1),
       appBar: AppBar(
         leading: Builder(
-            builder: (context) {
-              return IconButton(
-                icon: Padding(
-                  padding: const EdgeInsets.only(left: 12.0),
-                  child: Icon(
-                    Icons.menu,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              );
-            }
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.sort, size: 28), // Sleek menu icon
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
+          }
         ),
-        title: Transform.translate(
-          offset: Offset(-12, 0),
-          child: Text(
-            'Vibe Hear',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
-            ),
-          ),
-        ),
-        backgroundColor: Colors.transparent,
+        title: const Text('Hear Vibe'),
       ),
       drawer: Drawer(
-        backgroundColor: Colors.blue[50],
+        backgroundColor: Colors.white,
         child: Column(
           children: [
-            // logo
-            DrawerHeader(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: Image.asset('lib/images/logo_vibe_hear.png'),
-                )
-            ),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SetupPage()
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0, top: 8),
-                child: ListTile(
-                  leading: Icon(Icons.person_2),
-                  title: Text('Profile'),
-                ),
-              ),
-            ),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettingsPage(),
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: ListTile(
-                  leading: Icon(Icons.settings),
-                  title: Text('Settings'),
-                ),
-              ),
-            ),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => Support()
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: ListTile(
-                  leading: Icon(Icons.headset_mic),
-                  title: Text('Support'),
-                ),
-              ),
-            ),
-
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AboutPage(),
-                  ),
-                );
-              },
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: ListTile(
-                  leading: Icon(Icons.info),
-                  title: Text('About'),
-                ),
-              ),
-            ),
+             DrawerHeader(
+               decoration: const BoxDecoration(
+                 color: Color(0xFFEEF2FF),
+                 border: Border(bottom: BorderSide.none), // removes default line
+               ),
+               child: Center(
+                 child: Column(
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                     Image.asset('lib/images/logo_vibe_hear.png', height: 80),
+                     const SizedBox(height: 12),
+                     const Text(
+                       "Vibe Hear", 
+                       style: TextStyle(
+                         color: Color(0xFF6366F1),
+                         fontWeight: FontWeight.w800,
+                         fontSize: 20,
+                       )
+                     ),
+                   ],
+                 ),
+               ),
+             ),
+             const SizedBox(height: 12),
+             _buildDrawerItem(
+               icon: Icons.person_outline, 
+               title: 'Profile Settings', 
+               page: const SetupPage(), 
+               context: context
+             ),
+             _buildDrawerItem(
+               icon: Icons.settings_outlined, 
+               title: 'App Settings', 
+               page: const SettingsPage(), 
+               context: context
+             ),
+             _buildDrawerItem(
+               icon: Icons.headset_mic_outlined, 
+               title: 'Support', 
+               page: const Support(), 
+               context: context
+             ),
+             _buildDrawerItem(
+               icon: Icons.info_outline, 
+               title: 'About Us', 
+               page: const AboutPage(), 
+               context: context
+             ),
           ],
         ),
       ),

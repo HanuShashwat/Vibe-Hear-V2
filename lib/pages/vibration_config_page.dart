@@ -15,8 +15,6 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
   final List<int> _pattern = [];
   final TextEditingController _timeController = TextEditingController();
 
-  final Color blueTone = const Color.fromRGBO(242, 250, 255, 1);
-
   @override
   void initState() {
     super.initState();
@@ -40,9 +38,13 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
       "vibration_${widget.triggerWord}",
       _pattern.map((e) => e.toString()).toList(),
     );
-    if(!mounted) return;
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Saved for '${widget.triggerWord}'")),
+      SnackBar(
+        content: Text("Saved pattern for '${widget.triggerWord}'"),
+        backgroundColor: const Color(0xFF6366F1),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -65,7 +67,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
 
   Future<void> _testPattern() async {
     final supported = await Vibration.hasVibrator();
-    if (supported) {
+    if (supported == true) {
       final formattedPattern = [0];
       for (final ms in _pattern) {
         formattedPattern.add(ms);
@@ -80,100 +82,127 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: blueTone,
       appBar: AppBar(
         title: Text(widget.triggerWord),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text("Vibration Pattern:", style: TextStyle(fontSize: 16)),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Vibration Pattern",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B)
+                ),
               ),
-              child: Text(
-                _pattern.isEmpty
-                    ? "No pattern set"
-                    : _pattern.map((e) => "${e}ms").join(", "),
-                style: const TextStyle(fontSize: 16),
+              const SizedBox(height: 8),
+              const Text(
+                "Build a custom vibration sequence by adding buzz durations (in milliseconds).",
+                style: TextStyle(fontSize: 14, color: Color(0xFF64748B), height: 1.4),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _timeController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: "Enter time in ms",
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(),
+              const SizedBox(height: 24),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(minHeight: 60),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Center(
+                          child: Text(
+                            _pattern.isEmpty
+                                ? "No pattern set"
+                                : _pattern.map((e) => "${e}ms").join(" • "),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: _pattern.isEmpty ? FontWeight.normal : FontWeight.bold,
+                              color: _pattern.isEmpty ? const Color(0xFF94A3B8) : const Color(0xFF6366F1),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _timeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: "Duration (e.g. 500)",
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _addTime,
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: const Icon(Icons.add),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _resetPattern,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        side: const BorderSide(color: Color(0xFF64748B)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        foregroundColor: const Color(0xFF64748B),
+                      ),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Reset", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _addTime,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text("+"),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _resetPattern,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _testPattern,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B5CF6),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      icon: const Icon(Icons.vibration),
+                      label: const Text("Test", style: TextStyle(fontSize: 16)),
                     ),
-                    child: const Text("Reset"),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _testPattern,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text("Test"),
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            ElevatedButton(
-              onPressed: _savePattern,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(50),
+                ],
               ),
-              child: const Text("SAVE", style: TextStyle(fontSize: 18)),
-            ),
-          ],
+              const Spacer(),
+              ElevatedButton(
+                onPressed: _savePattern,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(60),
+                ),
+                child: const Text("SAVE PATTERN", style: TextStyle(fontSize: 18, letterSpacing: 1)),
+              ),
+            ],
+          ),
         ),
       ),
     );

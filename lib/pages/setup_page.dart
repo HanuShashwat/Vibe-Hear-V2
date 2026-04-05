@@ -21,6 +21,7 @@ class _SetupPageState extends State<SetupPage> {
     super.initState();
     loadUserData();
   }
+  
   Future<void> loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -37,16 +38,15 @@ class _SetupPageState extends State<SetupPage> {
       builder: (context) {
         return AlertDialog(
           backgroundColor: Colors.white,
-          title: Text("Missing Information"),
-          content: Text("Please enter your 'First Name' and 'Last Name'."),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text("Missing Info"),
+          content: const Text("Please enter your First Name and Last Name."),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                  "OK",
-                style: TextStyle(
-                    color: Color.fromRGBO(8, 129, 208, 1)
-                ),
+              child: const Text(
+                "OK",
+                style: TextStyle(color: Color(0xFF6366F1), fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -55,328 +55,127 @@ class _SetupPageState extends State<SetupPage> {
     );
   }
 
+  Widget _buildFieldSection(String label, TextEditingController controller, {String? hint}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF334155),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              hintText: hint,
+            ), // Global InputTheme handles the rest!
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(242, 250, 255, 1),
+      appBar: AppBar(
+        title: const Text('Setup Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.headset_mic),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Support()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AppBar(
-              backgroundColor: Colors.transparent,
-              leading: Builder(
-                  builder: (context) {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 12.0),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.arrow_back,
-                          color: Colors.grey.shade800,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(
-                            context,
-                          );
-                        },
-                      ),
-                    );
-                  }
-              ),
-              title: Transform.translate(
-                offset: Offset(-14, 0),
-                child: Text(
-                    'Setup',
-                  style: TextStyle(
-                    color: Colors.grey[800],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      _buildFieldSection("First Name", firstNameController),
+                      _buildFieldSection("Middle Name", middleNameController, hint: "Optional"),
+                      _buildFieldSection("Last Name", lastNameController),
+                      _buildFieldSection("Nick Name", nickNameController, hint: "Optional"),
+                    ],
                   ),
                 ),
               ),
-              actions: [
-                IconButton(
-                  icon: Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: Icon(
-                      Icons.headset_mic,
-                      color: Colors.grey.shade800,
-                      size: 22,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                        builder: (context) => const Support()
-                        ),
-                    );
-                  },
-                ),
-              ],
-            ),
-
-            SizedBox(height: 2),
-
-            // White box
-            Center(
-              child: Container(
-                width: 300,
-                height: 414,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  //mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 6.0),
-                            child: Text(
-                              'First Name',
-                              style: TextStyle(
-                                color: Colors.grey[800],
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: TextField(
-                        controller: firstNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                         border: OutlineInputBorder(
-                           borderRadius: BorderRadius.circular(8),
-                           borderSide: BorderSide(
-                             color: Colors.grey.shade800,
-                           )
-                         ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 18),
-
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 6.0),
-                            child: Text(
-                              'Middle Name',
-                              style: TextStyle(
-                                  color: Colors.grey[800],
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: TextField(
-                        controller: middleNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          hintText: "Optional",
-                          hintStyle: TextStyle(
-                            color: Colors.grey[600]
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade800,
-                              )
-                          ),
-
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 18),
-
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 6.0),
-                            child: Text(
-                              'Last Name',
-                              style: TextStyle(
-                                  color: Colors.grey[800],
-                                fontWeight: FontWeight.bold,
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: TextField(
-                        controller: lastNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade800,
-                              )
-                          ),
-
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 18),
-
-                    Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 6),
-                            child: Text(
-                              'Nick Name',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[800],
-                                  fontSize: 16
-                              ),),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: TextField(
-                        controller: nickNameController,
-                        textCapitalization: TextCapitalization.words,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                          hintText: "Optional",
-                          hintStyle: TextStyle(
-                              color: Colors.grey[600]
-                          ),
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: Colors.grey.shade800,
-                              )
-                          ),
-
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(height: 6),
-
-            Padding(
-              padding: const EdgeInsets.only(left: 23, right: 23, top: 14),
-              child: Center(
+              const SizedBox(height: 24),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
+                  'Your data stays private. This app works 100% offline — nothing ever leaves your phone.',
                   textAlign: TextAlign.center,
-                    'Your data stays private. This app works 100% offline — nothing ever leaves your phone.',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 14,
+                    color: Color(0xFF64748B), // Slate 500
                     fontStyle: FontStyle.italic,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                height: 60,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    String firstName = firstNameController.text.trim();
+                    String middleName = middleNameController.text.trim();
+                    String lastName = lastNameController.text.trim();
+                    String nickName = nickNameController.text.trim();
+                    if (firstName.isEmpty || lastName.isEmpty) {
+                      showValidationDialog();
+                    } else {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('firstName', firstName);
+                      await prefs.setString('middleName', middleName);
+                      await prefs.setString('lastName', lastName);
+                      await prefs.setString('nickName', nickName);
+                      await prefs.setBool('isFirstTime', false);
 
-            SizedBox(height: 37),
+                      if (!context.mounted) return;
 
-            GestureDetector(
-              onTap: () async {
-                String firstName = firstNameController.text.trim();
-                String middleName = middleNameController.text.trim();
-                String lastName = lastNameController.text.trim();
-                String nickName = nickNameController.text.trim();
-                if (firstName.isEmpty || lastName.isEmpty) {
-                  showValidationDialog();
-                } else {
-                  // Saving Names Locally (So that user needn't to write it again n again)
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('firstName', firstName);
-                  await prefs.setString('middleName', middleName);
-                  await prefs.setString('lastName', lastName);
-                  await prefs.setString('nickName', nickName);
-                  await prefs.setBool('isFirstTime', false);
-
-                  if (!context.mounted) return;
-
-                  // Navigation to Home Screen
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => Home(
-                          firstName: firstName,
-                          middleName: middleName,
-                          lastName: lastName,
-                          nickName: nickName,
-                        )
-                    ),
-                  );
-                }
-              },
-              child: Center(
-                child: Container(
-                  width: 280,
-                  height: 60,
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: Color.fromRGBO(8, 129, 208, 1),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Center(
-                      child: Text(
-                        'Proceed',
-                        style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => Home(
+                            firstName: firstName,
+                            middleName: middleName,
+                            lastName: lastName,
+                            nickName: nickName,
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    elevation: 4,
+                    shadowColor: const Color(0xFF6366F1).withValues(alpha: 0.4),
                   ),
+                  child: const Text('Continue to App', style: TextStyle(fontSize: 20)),
                 ),
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );
