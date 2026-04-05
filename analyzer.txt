@@ -1,0 +1,16 @@
+Analyzing Hear_Vibe...                                          
+
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: BottomNavBar.onTabChange - lib\components\bottom_nav_bar.dart:4:7 - must_be_immutable
+   info - Unnecessary instance of 'Container' - lib\components\bottom_nav_bar.dart:10:12 - avoid_unnecessary_containers
+   info - Don't use 'BuildContext's across async gaps - lib\pages\home_page.dart:71:28 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\home_page.dart:104:43 - dead_null_aware_expression
+warning - The value of the local variable 'fullName' isn't used - lib\pages\home_page.dart:126:12 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps - lib\pages\settings_page.dart:37:26 - use_build_context_synchronously
+warning - Unused import: 'package:vibehear/pages/intro_page.dart' - lib\pages\setup_page.dart:3:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\pages\setup_page.dart:342:21 - use_build_context_synchronously
+   info - Use a 'SizedBox' to add whitespace to a layout - lib\pages\support.dart:294:24 - sized_box_for_whitespace
+   info - Don't use 'BuildContext's across async gaps - lib\pages\vibration_config_page.dart:43:26 - use_build_context_synchronously
+warning - The left operand can't be null, so the right operand is never executed - lib\pages\vibration_config_page.dart:66:56 - dead_null_aware_expression
+   info - Unnecessary use of string interpolation - lib\pages\vibration_config_page.dart:84:21 - unnecessary_string_interpolations
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\pages\vibration_page.dart:58:17 - deprecated_member_use
+
