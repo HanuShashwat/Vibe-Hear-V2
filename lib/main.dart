@@ -3,6 +3,8 @@ import 'package:vibehear/pages/home.dart';
 import 'package:vibehear/pages/intro_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vibehear/blocs/navigation/nav_bloc.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,8 +44,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Hear Vibe',
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<NavBloc>(
+          create: (context) => NavBloc(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Hear Vibe',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -116,6 +124,7 @@ class MyApp extends StatelessWidget {
         middleName: middleName,
         lastName: lastName,
         nickName: nickName,
+      ),
       ),
     );
   }
