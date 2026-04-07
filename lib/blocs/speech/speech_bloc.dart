@@ -69,35 +69,45 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
       StartListening event, Emitter<SpeechState> emit) async {
     if (!_speech.isAvailable || state.isMicAvailable == false) return;
     
+    // Force a cleanup if it thinks it's already listening to prevent permanent hang
     if (_speech.isListening) {
-      emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
-      return;
+      await _speech.cancel();
+      await Future.delayed(const Duration(milliseconds: 100)); // Brief pause to let native channels clear
     }
 
     emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
 
-    await _speech.listen(
-      onResult: (result) {
-        add(UpdateTranscript(result.recognizedWords, isFinal: result.finalResult));
-        final recognizedWords = result.recognizedWords.toLowerCase();
-        for (final trigger in triggerWordsBloc.state.triggerWords) {
-          if (triggerWordsBloc.state.enabledStatus[trigger] == true &&
-              recognizedWords.contains(trigger.toLowerCase())) {
-            if (DateTime.now().difference(_lastDetectionTime).inSeconds > 2) {
-              _lastDetectionTime = DateTime.now();
-              _handleDetection(trigger);
+    try {
+      await _speech.listen(
+        onResult: (result) {
+          add(UpdateTranscript(result.recognizedWords, isFinal: result.finalResult));
+          final recognizedWords = result.recognizedWords.toLowerCase();
+          for (final trigger in triggerWordsBloc.state.triggerWords) {
+            if (triggerWordsBloc.state.enabledStatus[trigger] == true &&
+                recognizedWords.contains(trigger.toLowerCase())) {
+              if (DateTime.now().difference(_lastDetectionTime).inSeconds > 2) {
+                _lastDetectionTime = DateTime.now();
+                _handleDetection(trigger);
+              }
             }
           }
-        }
-      },
-      listenFor: const Duration(minutes: 5),
-      pauseFor: const Duration(seconds: 5),
-      listenOptions: stt.SpeechListenOptions(
-        partialResults: true,
-        cancelOnError: true,
-        listenMode: stt.ListenMode.dictation,
-      ),
-    );
+        },
+        listenFor: const Duration(minutes: 5),
+        pauseFor: const Duration(seconds: 5),
+        listenOptions: stt.SpeechListenOptions(
+          partialResults: true,
+          cancelOnError: true,
+          listenMode: stt.ListenMode.dictation,
+        ),
+      );
+    } catch (e) {
+      // In case of platform exception, ensure we recover gracefully.
+      emit(state.copyWith(
+          isListening: false, detectionMessage: "Mic error, restarting..."));
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (!isClosed) add(StartListening());
+      });
+    }
   }
 
   void _onStopListening(StopListening event, Emitter<SpeechState> emit) {
