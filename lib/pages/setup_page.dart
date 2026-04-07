@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:vibehear/blocs/profile/profile_bloc.dart';
+import 'package:vibehear/blocs/profile/profile_event.dart';
 import 'package:vibehear/pages/home.dart';
 import 'package:vibehear/pages/support.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SetupPage extends StatefulWidget {
   const SetupPage({super.key});
@@ -11,25 +13,19 @@ class SetupPage extends StatefulWidget {
 }
 
 class _SetupPageState extends State<SetupPage> {
-  TextEditingController firstNameController = TextEditingController();
-  TextEditingController middleNameController = TextEditingController();
-  TextEditingController lastNameController = TextEditingController();
-  TextEditingController nickNameController = TextEditingController();
+  late TextEditingController firstNameController;
+  late TextEditingController middleNameController;
+  late TextEditingController lastNameController;
+  late TextEditingController nickNameController;
 
   @override
   void initState() {
     super.initState();
-    loadUserData();
-  }
-  
-  Future<void> loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      firstNameController.text = prefs.getString('firstName') ?? '';
-      middleNameController.text = prefs.getString('middleName') ?? '';
-      lastNameController.text = prefs.getString('lastName') ?? '';
-      nickNameController.text = prefs.getString('nickName') ?? '';
-    });
+    final profileState = context.read<ProfileBloc>().state;
+    firstNameController = TextEditingController(text: profileState.firstName);
+    middleNameController = TextEditingController(text: profileState.middleName);
+    lastNameController = TextEditingController(text: profileState.lastName);
+    nickNameController = TextEditingController(text: profileState.nickName);
   }
 
   void showValidationDialog() {
@@ -75,7 +71,7 @@ class _SetupPageState extends State<SetupPage> {
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
               hintText: hint,
-            ), // Global InputTheme handles the rest!
+            ),
           ),
         ],
       ),
@@ -137,32 +133,25 @@ class _SetupPageState extends State<SetupPage> {
                 width: double.infinity,
                 height: 60,
                 child: ElevatedButton(
-                  onPressed: () async {
+                  onPressed: () {
                     String firstName = firstNameController.text.trim();
                     String middleName = middleNameController.text.trim();
                     String lastName = lastNameController.text.trim();
                     String nickName = nickNameController.text.trim();
+                    
                     if (firstName.isEmpty || lastName.isEmpty) {
                       showValidationDialog();
                     } else {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setString('firstName', firstName);
-                      await prefs.setString('middleName', middleName);
-                      await prefs.setString('lastName', lastName);
-                      await prefs.setString('nickName', nickName);
-                      await prefs.setBool('isFirstTime', false);
-
-                      if (!context.mounted) return;
-
+                      context.read<ProfileBloc>().add(SaveProfile(
+                        firstName: firstName,
+                        middleName: middleName,
+                        lastName: lastName,
+                        nickName: nickName,
+                      ));
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => Home(
-                            firstName: firstName,
-                            middleName: middleName,
-                            lastName: lastName,
-                            nickName: nickName,
-                          ),
+                          builder: (context) => const Home(),
                         ),
                       );
                     }
