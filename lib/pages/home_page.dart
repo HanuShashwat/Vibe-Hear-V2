@@ -184,7 +184,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       const Text(
-                                        "Status",
+                                        "Live Status",
                                         style: TextStyle(
                                           color: Color(0xFF94A3B8),
                                           fontWeight: FontWeight.w600,
@@ -193,14 +193,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                          speechState.detectionMessage,
+                                         speechState.currentTranscript.isNotEmpty
+                                            ? speechState.currentTranscript
+                                            : speechState.detectionMessage,
                                           style: TextStyle(
                                             color: speechState.detectionMessage.startsWith('Detected') 
                                               ? Colors.redAccent 
                                               : const Color(0xFF0F172A),
                                             fontWeight: FontWeight.w700,
                                             fontSize: 18,
+                                            overflow: TextOverflow.fade,
                                           ),
+                                          maxLines: 2,
                                       ),
                                     ],
                                   ),
