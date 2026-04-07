@@ -20,3 +20,15 @@ class UpdateMessage extends SpeechEvent {
   @override
   List<Object> get props => [message];
 }
+
+class UpdateTranscript extends SpeechEvent {
+  final String currentWords;
+  final bool isFinal;
+
+  const UpdateTranscript(this.currentWords, {this.isFinal = false});
+
+  @override
+  List<Object> get props => [currentWords, isFinal];
+}
+
+class FinalizeTranscript extends SpeechEvent {}
