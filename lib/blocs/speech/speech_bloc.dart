@@ -30,12 +30,14 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
           if (val == 'notListening' || val == 'done') {
             if (!isClosed) {
               add(FinalizeTranscript());
-              add(StartListening()); // continuous loop
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (!isClosed) add(StartListening());
+              });
             }
           }
         },
         onError: (err) {
-          Future.delayed(const Duration(seconds: 1), () {
+          Future.delayed(const Duration(milliseconds: 500), () {
             if (!isClosed) {
               add(FinalizeTranscript());
               add(StartListening());
@@ -66,7 +68,11 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   Future<void> _onStartListening(
       StartListening event, Emitter<SpeechState> emit) async {
     if (!_speech.isAvailable || state.isMicAvailable == false) return;
-    if (_speech.isListening) return;
+    
+    if (_speech.isListening) {
+      emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
+      return;
+    }
 
     emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
 
@@ -148,7 +154,13 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     }
 
     Future.delayed(const Duration(seconds: 4), () {
-      if (!isClosed) add(StartListening()); // resets status message to 'actively listening'
+      if (!isClosed) {
+        if (_speech.isListening) {
+           add(UpdateMessage('Actively listening...'));
+        } else {
+           add(StartListening());
+        }
+      }
     });
   }
 }
