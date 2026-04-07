@@ -13,27 +13,11 @@ import 'package:vibehear/pages/transcript_page.dart';
 import 'package:vibehear/pages/vibration_page.dart';
 
 class Home extends StatelessWidget {
-  final String firstName;
-  final String middleName;
-  final String lastName;
-  final String nickName;
-
-  const Home({
-    super.key,
-    required this.firstName,
-    required this.middleName,
-    required this.lastName,
-    required this.nickName,
-  });
+  const Home({super.key});
 
   List<Widget> _getPages() {
     return [
-      HomePage(
-        firstName: firstName,
-        middleName: middleName,
-        lastName: lastName,
-        nickName: nickName,
-      ),
+      const HomePage(),
       const VibrationPage(),
       const TranscriptPage(),
     ];
@@ -70,7 +54,7 @@ class Home extends StatelessWidget {
     return BlocBuilder<NavBloc, NavState>(
       builder: (context, state) {
         return Scaffold(
-          extendBody: true, // Allows the body to stream behind the floating nav bar
+          extendBody: true,
           bottomNavigationBar: BottomNavBar(
             currentIndex: state.tabIndex,
             onTabChange: (index) {
