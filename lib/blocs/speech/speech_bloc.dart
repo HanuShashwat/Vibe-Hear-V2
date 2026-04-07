@@ -17,6 +17,8 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     on<StartListening>(_onStartListening);
     on<StopListening>(_onStopListening);
     on<UpdateMessage>(_onUpdateMessage);
+    on<UpdateTranscript>(_onUpdateTranscript);
+    on<FinalizeTranscript>(_onFinalizeTranscript);
   }
 
   Future<void> _onInitialize(
@@ -26,12 +28,18 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
       final available = await _speech.initialize(
         onStatus: (val) {
           if (val == 'notListening' || val == 'done') {
-            if (!isClosed) add(StartListening()); // continuous loop
+            if (!isClosed) {
+              add(FinalizeTranscript());
+              add(StartListening()); // continuous loop
+            }
           }
         },
         onError: (err) {
           Future.delayed(const Duration(seconds: 1), () {
-            if (!isClosed) add(StartListening());
+            if (!isClosed) {
+              add(FinalizeTranscript());
+              add(StartListening());
+            }
           });
         },
       );
@@ -64,6 +72,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
     await _speech.listen(
       onResult: (result) {
+        add(UpdateTranscript(result.recognizedWords, isFinal: result.finalResult));
         final recognizedWords = result.recognizedWords.toLowerCase();
         for (final trigger in triggerWordsBloc.state.triggerWords) {
           if (triggerWordsBloc.state.enabledStatus[trigger] == true &&
@@ -87,11 +96,34 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
   void _onStopListening(StopListening event, Emitter<SpeechState> emit) {
     _speech.stop();
+    add(FinalizeTranscript());
     emit(state.copyWith(isListening: false));
   }
 
   void _onUpdateMessage(UpdateMessage event, Emitter<SpeechState> emit) {
     emit(state.copyWith(detectionMessage: event.message));
+  }
+
+  void _onUpdateTranscript(UpdateTranscript event, Emitter<SpeechState> emit) {
+    if (event.isFinal && event.currentWords.isNotEmpty) {
+      final newHistory = List<String>.from(state.transcriptHistory)..add(event.currentWords);
+      emit(state.copyWith(
+        transcriptHistory: newHistory,
+        currentTranscript: '',
+      ));
+    } else {
+      emit(state.copyWith(currentTranscript: event.currentWords));
+    }
+  }
+
+  void _onFinalizeTranscript(FinalizeTranscript event, Emitter<SpeechState> emit) {
+    if (state.currentTranscript.isNotEmpty) {
+      final newHistory = List<String>.from(state.transcriptHistory)..add(state.currentTranscript);
+      emit(state.copyWith(
+        transcriptHistory: newHistory,
+        currentTranscript: '',
+      ));
+    }
   }
 
   Future<void> _handleDetection(String triggerWord) async {
