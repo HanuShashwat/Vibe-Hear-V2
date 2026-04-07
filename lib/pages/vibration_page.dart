@@ -57,7 +57,7 @@ class VibrationPage extends StatelessWidget {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 180),
                   itemCount: state.triggerWords.length,
                   itemBuilder: (context, index) {
                     final word = state.triggerWords[index];
@@ -126,11 +126,14 @@ class VibrationPage extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddDialog(context),
-        backgroundColor: const Color(0xFF6366F1),
-        elevation: 4,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 100.0),
+        child: FloatingActionButton(
+          onPressed: () => _showAddDialog(context),
+          backgroundColor: const Color(0xFF6366F1),
+          elevation: 4,
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
       ),
     );
   }
