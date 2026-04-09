@@ -134,25 +134,9 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   }
 
   void _onUpdateTranscript(UpdateTranscript event, Emitter<SpeechState> emit) {
-    if (event.isFinal && event.currentWords.isNotEmpty) {
-      final newHistory = List<String>.from(state.transcriptHistory);
-      final now = DateTime.now();
-
-      if (newHistory.isEmpty || now.difference(_lastFinalizeTime).inSeconds > 3) {
-        newHistory.add(event.currentWords);
-      } else {
-        newHistory[newHistory.length - 1] = newHistory.last + " " + event.currentWords;
-      }
-
-      _lastFinalizeTime = now;
-      
-      emit(state.copyWith(
-        transcriptHistory: newHistory,
-        currentTranscript: '',
-      ));
-    } else {
-      emit(state.copyWith(currentTranscript: event.currentWords));
-    }
+    // The stt plugin gives cumulative results for the current session.
+    // We only finalize and append to history when the session legitimately ends (via FinalizeTranscript).
+    emit(state.copyWith(currentTranscript: event.currentWords));
   }
 
   void _onFinalizeTranscript(FinalizeTranscript event, Emitter<SpeechState> emit) {
