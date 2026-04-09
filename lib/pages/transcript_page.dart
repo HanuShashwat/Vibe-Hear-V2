@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:vibehear/blocs/speech/speech_bloc.dart';
+import 'package:vibehear/blocs/speech/speech_event.dart';
 import 'package:vibehear/blocs/speech/speech_state.dart';
 
 class TranscriptPage extends StatefulWidget {
@@ -44,13 +45,42 @@ class _TranscriptPageState extends State<TranscriptPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Live Transcript',
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Live Transcript',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      BlocBuilder<SpeechBloc, SpeechState>(
+                        builder: (context, state) {
+                          final isPaused = state.isPaused;
+                          return GestureDetector(
+                            onTap: () {
+                              context.read<SpeechBloc>().add(ToggleListening());
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isPaused
+                                    ? Colors.orange.withValues(alpha: 0.1)
+                                    : const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                isPaused ? Icons.mic_off_rounded : Icons.mic_rounded,
+                                color: isPaused ? Colors.orange : const Color(0xFF8B5CF6),
+                                size: 28,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   const Text(
