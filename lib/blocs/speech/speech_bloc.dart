@@ -11,11 +11,13 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   final TriggerWordsBloc triggerWordsBloc;
   final stt.SpeechToText _speech = stt.SpeechToText();
   DateTime _lastDetectionTime = DateTime.now();
+  DateTime _lastFinalizeTime = DateTime.now();
 
   SpeechBloc({required this.triggerWordsBloc}) : super(const SpeechState()) {
     on<InitializeSpeech>(_onInitialize);
     on<StartListening>(_onStartListening);
     on<StopListening>(_onStopListening);
+    on<ToggleListening>(_onToggleListening);
     on<UpdateMessage>(_onUpdateMessage);
     on<UpdateTranscript>(_onUpdateTranscript);
     on<FinalizeTranscript>(_onFinalizeTranscript);
@@ -67,7 +69,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
   Future<void> _onStartListening(
       StartListening event, Emitter<SpeechState> emit) async {
-    if (!_speech.isAvailable || state.isMicAvailable == false) return;
+    if (!_speech.isAvailable || state.isMicAvailable == false || state.isPaused) return;
     
     // Force a cleanup if it thinks it's already listening to prevent permanent hang
     if (_speech.isListening) {
@@ -116,13 +118,34 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     emit(state.copyWith(isListening: false));
   }
 
+  void _onToggleListening(ToggleListening event, Emitter<SpeechState> emit) {
+    if (state.isPaused) {
+      emit(state.copyWith(isPaused: false));
+      add(StartListening());
+    } else {
+      emit(state.copyWith(isPaused: true));
+      _speech.stop();
+      add(FinalizeTranscript());
+    }
+  }
+
   void _onUpdateMessage(UpdateMessage event, Emitter<SpeechState> emit) {
     emit(state.copyWith(detectionMessage: event.message));
   }
 
   void _onUpdateTranscript(UpdateTranscript event, Emitter<SpeechState> emit) {
     if (event.isFinal && event.currentWords.isNotEmpty) {
-      final newHistory = List<String>.from(state.transcriptHistory)..add(event.currentWords);
+      final newHistory = List<String>.from(state.transcriptHistory);
+      final now = DateTime.now();
+
+      if (newHistory.isEmpty || now.difference(_lastFinalizeTime).inSeconds > 3) {
+        newHistory.add(event.currentWords);
+      } else {
+        newHistory[newHistory.length - 1] = newHistory.last + " " + event.currentWords;
+      }
+
+      _lastFinalizeTime = now;
+      
       emit(state.copyWith(
         transcriptHistory: newHistory,
         currentTranscript: '',
@@ -134,7 +157,17 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
   void _onFinalizeTranscript(FinalizeTranscript event, Emitter<SpeechState> emit) {
     if (state.currentTranscript.isNotEmpty) {
-      final newHistory = List<String>.from(state.transcriptHistory)..add(state.currentTranscript);
+      final newHistory = List<String>.from(state.transcriptHistory);
+      final now = DateTime.now();
+
+      if (newHistory.isEmpty || now.difference(_lastFinalizeTime).inSeconds > 3) {
+        newHistory.add(state.currentTranscript);
+      } else {
+        newHistory[newHistory.length - 1] = newHistory.last + " " + state.currentTranscript;
+      }
+
+      _lastFinalizeTime = now;
+
       emit(state.copyWith(
         transcriptHistory: newHistory,
         currentTranscript: '',
