@@ -32,3 +32,5 @@ class UpdateTranscript extends SpeechEvent {
 }
 
 class FinalizeTranscript extends SpeechEvent {}
+
+class ToggleListening extends SpeechEvent {}
