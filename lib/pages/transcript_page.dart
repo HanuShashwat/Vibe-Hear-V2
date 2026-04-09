@@ -127,13 +127,24 @@ class _TranscriptPageState extends State<TranscriptPage> {
                     );
                   }
 
+                  int itemCount = history.length;
+                  if (history.isEmpty && current.isNotEmpty) {
+                    itemCount = 1;
+                  }
+
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                    itemCount: history.length + (current.isNotEmpty ? 1 : 0),
+                    itemCount: itemCount,
                     itemBuilder: (context, index) {
-                      final isCurrent = current.isNotEmpty && index == history.length;
-                      final text = isCurrent ? current : history[index];
+                      final isLastItem = index == itemCount - 1;
+
+                      String historyText = "";
+                      if (index < history.length) {
+                        historyText = history[index];
+                      }
+
+                      final hasCurrentForThisItem = isLastItem && current.isNotEmpty;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
@@ -144,12 +155,12 @@ class _TranscriptPageState extends State<TranscriptPage> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: isCurrent
+                                color: hasCurrentForThisItem
                                     ? const Color(0xFFEEF2FF).withValues(alpha: 0.8)
                                     : Colors.white.withValues(alpha: 0.6),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: isCurrent
+                                  color: hasCurrentForThisItem
                                       ? const Color(0xFF8B5CF6).withValues(alpha: 0.4)
                                       : Colors.white.withValues(alpha: 0.8),
                                   width: 1.5,
@@ -162,14 +173,31 @@ class _TranscriptPageState extends State<TranscriptPage> {
                                   ),
                                 ],
                               ),
-                              child: Text(
-                                text,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  height: 1.5,
-                                  color: const Color(0xFF334155),
-                                  fontWeight: isCurrent ? FontWeight.w500 : FontWeight.w400,
-                                  fontStyle: isCurrent ? FontStyle.italic : FontStyle.normal,
+                              child: Text.rich(
+                                TextSpan(
+                                  children: [
+                                    if (historyText.isNotEmpty)
+                                      TextSpan(
+                                        text: historyText,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          height: 1.5,
+                                          color: Color(0xFF334155),
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                    if (hasCurrentForThisItem)
+                                      TextSpan(
+                                        text: (historyText.isNotEmpty ? " " : "") + current,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          height: 1.5,
+                                          color: Color(0xFF334155),
+                                          fontWeight: FontWeight.w500,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                  ],
                                 ),
                                 textAlign: TextAlign.left,
                               ),
