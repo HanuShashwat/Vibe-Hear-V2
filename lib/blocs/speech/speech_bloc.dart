@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:permission_handler/permission_handler.dart';
@@ -12,6 +13,8 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   DateTime _lastDetectionTime = DateTime.now();
   DateTime _lastFinalizeTime = DateTime.now();
+  DateTime _lastListenAttempt = DateTime.now();
+  Timer? _watchdogTimer;
 
   SpeechBloc({required this.triggerWordsBloc}) : super(const SpeechState()) {
     on<InitializeSpeech>(_onInitialize);
@@ -21,6 +24,20 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     on<UpdateMessage>(_onUpdateMessage);
     on<UpdateTranscript>(_onUpdateTranscript);
     on<FinalizeTranscript>(_onFinalizeTranscript);
+
+    _watchdogTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (!isClosed && !state.isPaused && state.isMicAvailable && _speech.isAvailable) {
+        if (!_speech.isListening) {
+           add(StartListening());
+        }
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _watchdogTimer?.cancel();
+    return super.close();
   }
 
   Future<void> _onInitialize(
@@ -73,9 +90,15 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     
     // Force a cleanup if it thinks it's already listening to prevent permanent hang
     if (_speech.isListening) {
+      final now = DateTime.now();
+      if (now.difference(_lastListenAttempt).inSeconds < 2) {
+        return; // Ignore redundant restart requested in rapid succession
+      }
       await _speech.cancel();
       await Future.delayed(const Duration(milliseconds: 100)); // Brief pause to let native channels clear
     }
+
+    _lastListenAttempt = DateTime.now();
 
     emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
 
