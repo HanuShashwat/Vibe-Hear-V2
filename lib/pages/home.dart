@@ -71,7 +71,7 @@ class Home extends StatelessWidget {
                 },
               );
             }),
-            title: const Text('Hear Vibe'),
+            title: const Text('Vibe Hear'),
           ),
           drawer: Drawer(
             backgroundColor: Colors.white,

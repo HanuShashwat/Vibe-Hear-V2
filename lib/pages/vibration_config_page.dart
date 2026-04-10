@@ -51,7 +51,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      "Build a custom vibration sequence by adding buzz durations (in milliseconds).",
+                      "Build a unique rhythm by adding alternating Buzz and Pause durations (in milliseconds).",
                       style: TextStyle(fontSize: 14, color: Color(0xFF64748B), height: 1.4),
                     ),
                     const SizedBox(height: 24),
@@ -73,7 +73,7 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
                                 child: Text(
                                   state.pattern.isEmpty
                                       ? "No pattern set"
-                                      : state.pattern.map((e) => "${e}ms").join(" • "),
+                                      : [for(int i=0; i<state.pattern.length; i++) "${state.pattern[i]}ms ${i%2==0 ? 'Buzz' : 'Pause'}"].join(" • "),
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: state.pattern.isEmpty ? FontWeight.normal : FontWeight.bold,
@@ -89,8 +89,8 @@ class _VibrationConfigPageState extends State<VibrationConfigPage> {
                                   child: TextField(
                                     controller: _timeController,
                                     keyboardType: TextInputType.number,
-                                    decoration: const InputDecoration(
-                                      hintText: "Duration (e.g. 500)",
+                                    decoration: InputDecoration(
+                                      hintText: "Duration (${state.pattern.length % 2 == 0 ? 'Buzz' : 'Pause'})",
                                     ),
                                   ),
                                 ),
