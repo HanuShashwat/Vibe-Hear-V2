@@ -26,7 +26,7 @@ Future<void> initializeBackgroundService() async {
 
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     notificationChannelId,
-    'Hear Vibe Foreground Service',
+    'Vibe Hear Foreground Service',
     description: 'This channel is used for important notifications.',
     importance: Importance.low,
   );
@@ -54,7 +54,7 @@ Future<void> initializeBackgroundService() async {
       autoStart: true,
       isForegroundMode: true,
       notificationChannelId: notificationChannelId,
-      initialNotificationTitle: 'Hear Vibe',
+      initialNotificationTitle: 'Vibe Hear',
       initialNotificationContent: 'Initializing...',
       foregroundServiceNotificationId: notificationId,
     ),
@@ -103,12 +103,12 @@ void onStart(ServiceInstance service) async {
       if (await service.isForegroundService()) {
         flutterLocalNotificationsPlugin.show(
           id: notificationId,
-          title: 'Hear Vibe',
+          title: 'Vibe Hear',
           body: savedMutedState ? 'Microphone Muted 🔇' : 'Actively listening for triggers...',
           notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
               notificationChannelId,
-              'Hear Vibe Foreground Service',
+              'Vibe Hear Foreground Service',
               icon: '@mipmap/ic_launcher',
               ongoing: true,
               actions: [
@@ -174,16 +174,14 @@ void onStart(ServiceInstance service) async {
               for (final trigger in savedKeywords) {
                 final isEnabled = prefs.getBool('enabled_$trigger') ?? true;
                 if (isEnabled && recognizedWords.contains(trigger.toLowerCase())) {
-                  if (DateTime.now().difference(lastDetectionTime).inSeconds > 2) {
+                  if (DateTime.now().difference(lastDetectionTime).inMilliseconds > 500) {
                     lastDetectionTime = DateTime.now();
                     
                     final raw = prefs.getStringList("vibration_$trigger") ?? [];
                     final pattern = raw.map((e) => int.tryParse(e) ?? 0).where((e) => e > 0).toList();
                     if (await Vibration.hasVibrator() == true) {
                       if (pattern.isNotEmpty) {
-                        final withPauses = <int>[0];
-                        for (final ms in pattern) { withPauses.add(ms); withPauses.add(150); }
-                        withPauses.removeLast();
+                        final withPauses = <int>[0, ...pattern];
                         Vibration.vibrate(pattern: withPauses);
                       } else {
                         Vibration.vibrate(pattern: [0, 500, 150, 500]);
@@ -203,6 +201,7 @@ void onStart(ServiceInstance service) async {
           );
         } catch (e) {
           debugPrint('Speech listen error: $e');
+          service.invoke('update', {'isListening': false, 'message': 'Mic Hardware Error - Retrying', 'currentTranscript': currentTranscript, 'history': transcriptHistory});
         }
       }
     }
