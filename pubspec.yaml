@@ -1,5 +1,5 @@
 name: vibehear
-description: "A new Flutter project."
+description: "An accessibility companion that translates speech and trigger words into distinct vibrations."
 publish_to: 'none'
 
 version: 1.0.0+1
