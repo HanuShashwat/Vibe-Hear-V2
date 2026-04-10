@@ -1,20 +1,24 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vibration/vibration.dart';
+import '../../services/background_service.dart';
 import '../trigger_words/trigger_words_bloc.dart';
 import 'speech_event.dart';
 import 'speech_state.dart';
 
+class _SyncServiceState extends SpeechEvent {
+  final bool isListening;
+  final List<String> history;
+  const _SyncServiceState(this.isListening, this.history);
+  @override
+  List<Object> get props => [isListening, history];
+}
+
 class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   final TriggerWordsBloc triggerWordsBloc;
-  final stt.SpeechToText _speech = stt.SpeechToText();
-  DateTime _lastDetectionTime = DateTime.now();
-  DateTime _lastFinalizeTime = DateTime.now();
-  DateTime _lastListenAttempt = DateTime.now();
-  Timer? _watchdogTimer;
+  StreamSubscription? _serviceSubscription;
 
   SpeechBloc({required this.triggerWordsBloc}) : super(const SpeechState()) {
     on<InitializeSpeech>(_onInitialize);
@@ -24,19 +28,17 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     on<UpdateMessage>(_onUpdateMessage);
     on<UpdateTranscript>(_onUpdateTranscript);
     on<FinalizeTranscript>(_onFinalizeTranscript);
-
-    _watchdogTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (!isClosed && !state.isPaused && state.isMicAvailable && _speech.isAvailable) {
-        if (!_speech.isListening) {
-           add(StartListening());
-        }
-      }
+    on<_SyncServiceState>((event, emit) {
+      emit(state.copyWith(
+        isListening: event.isListening,
+        transcriptHistory: event.history,
+      ));
     });
   }
 
   @override
   Future<void> close() {
-    _watchdogTimer?.cancel();
+    _serviceSubscription?.cancel();
     return super.close();
   }
 
@@ -44,34 +46,23 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
       InitializeSpeech event, Emitter<SpeechState> emit) async {
     final status = await Permission.microphone.request();
     if (status.isGranted) {
-      final available = await _speech.initialize(
-        onStatus: (val) {
-          if (val == 'notListening' || val == 'done') {
-            if (!isClosed) {
-              add(FinalizeTranscript());
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (!isClosed) add(StartListening());
-              });
-            }
-          }
-        },
-        onError: (err) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (!isClosed) {
-              add(FinalizeTranscript());
-              add(StartListening());
-            }
-          });
-        },
-      );
-      if (available) {
-        emit(state.copyWith(isMicAvailable: true));
-        add(StartListening());
-      } else {
-        emit(state.copyWith(
-            isMicAvailable: false,
-            detectionMessage: "Speech mode unavailable."));
-      }
+      emit(state.copyWith(isMicAvailable: true));
+      await initializeBackgroundService();
+      
+      _serviceSubscription = FlutterBackgroundService().on('update').listen((event) {
+        if (event != null && !isClosed) {
+           final isListening = event['isListening'] as bool? ?? false;
+           final message = event['message'] as String? ?? '';
+           final currentTranscript = event['currentTranscript'] as String? ?? '';
+           final historyRaw = event['history'] as List<dynamic>? ?? [];
+           final history = historyRaw.map((e) => e.toString()).toList();
+           
+           add(UpdateTranscript(currentTranscript, isFinal: false));
+           add(UpdateMessage(message));
+           add(_SyncServiceState(isListening, history));
+        }
+      });
+      
     } else if (status.isPermanentlyDenied) {
       emit(state.copyWith(
           isMicAvailable: false,
@@ -84,72 +75,24 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     }
   }
 
-  Future<void> _onStartListening(
-      StartListening event, Emitter<SpeechState> emit) async {
-    if (!_speech.isAvailable || !state.isMicAvailable || state.isPaused) return;
-    
-    // Force a cleanup if it thinks it's already listening to prevent permanent hang
-    if (_speech.isListening) {
-      final now = DateTime.now();
-      if (now.difference(_lastListenAttempt).inSeconds < 2) {
-        return; // Ignore redundant restart requested in rapid succession
-      }
-      await _speech.cancel();
-      await Future.delayed(const Duration(milliseconds: 100)); // Brief pause to let native channels clear
-    }
-
-    _lastListenAttempt = DateTime.now();
-
-    emit(state.copyWith(isListening: true, detectionMessage: 'Actively listening...'));
-
-    try {
-      await _speech.listen(
-        onResult: (result) {
-          add(UpdateTranscript(result.recognizedWords, isFinal: result.finalResult));
-          final recognizedWords = result.recognizedWords.toLowerCase();
-          for (final trigger in triggerWordsBloc.state.triggerWords) {
-            if (triggerWordsBloc.state.enabledStatus[trigger] == true &&
-                recognizedWords.contains(trigger.toLowerCase())) {
-              if (DateTime.now().difference(_lastDetectionTime).inSeconds > 2) {
-                _lastDetectionTime = DateTime.now();
-                _handleDetection(trigger);
-              }
-            }
-          }
-        },
-        listenFor: const Duration(minutes: 5),
-        pauseFor: const Duration(seconds: 5),
-        listenOptions: stt.SpeechListenOptions(
-          partialResults: true,
-          cancelOnError: true,
-          listenMode: stt.ListenMode.dictation,
-        ),
-      );
-    } catch (e) {
-      // In case of platform exception, ensure we recover gracefully.
-      emit(state.copyWith(
-          isListening: false, detectionMessage: "Mic error, restarting..."));
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        if (!isClosed) add(StartListening());
-      });
-    }
+  void _onStartListening(StartListening event, Emitter<SpeechState> emit) async {
+    if (!state.isMicAvailable) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_muted', false);
+    emit(state.copyWith(isPaused: false));
   }
 
-  void _onStopListening(StopListening event, Emitter<SpeechState> emit) {
-    _speech.stop();
-    add(FinalizeTranscript());
-    emit(state.copyWith(isListening: false));
+  void _onStopListening(StopListening event, Emitter<SpeechState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_muted', true);
+    emit(state.copyWith(isPaused: true));
   }
 
-  void _onToggleListening(ToggleListening event, Emitter<SpeechState> emit) {
-    if (state.isPaused) {
-      emit(state.copyWith(isPaused: false));
-      add(StartListening());
-    } else {
-      emit(state.copyWith(isPaused: true));
-      _speech.stop();
-      add(FinalizeTranscript());
-    }
+  void _onToggleListening(ToggleListening event, Emitter<SpeechState> emit) async {
+    final prefs = await SharedPreferences.getInstance();
+    final isMuted = prefs.getBool('is_muted') ?? false;
+    await prefs.setBool('is_muted', !isMuted);
+    emit(state.copyWith(isPaused: !isMuted));
   }
 
   void _onUpdateMessage(UpdateMessage event, Emitter<SpeechState> emit) {
@@ -157,60 +100,10 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
   }
 
   void _onUpdateTranscript(UpdateTranscript event, Emitter<SpeechState> emit) {
-    // The stt plugin gives cumulative results for the current session.
-    // We only finalize and append to history when the session legitimately ends (via FinalizeTranscript).
     emit(state.copyWith(currentTranscript: event.currentWords));
   }
 
   void _onFinalizeTranscript(FinalizeTranscript event, Emitter<SpeechState> emit) {
-    if (state.currentTranscript.isNotEmpty) {
-      final newHistory = List<String>.from(state.transcriptHistory);
-      final now = DateTime.now();
-
-      if (newHistory.isEmpty || now.difference(_lastFinalizeTime).inSeconds > 3) {
-        newHistory.add(state.currentTranscript);
-      } else {
-        newHistory[newHistory.length - 1] = '${newHistory.last} ${state.currentTranscript}';
-      }
-
-      _lastFinalizeTime = now;
-
-      emit(state.copyWith(
-        transcriptHistory: newHistory,
-        currentTranscript: '',
-      ));
-    }
-  }
-
-  Future<void> _handleDetection(String triggerWord) async {
-    add(UpdateMessage('Detected: $triggerWord'));
-
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList("vibration_$triggerWord") ?? [];
-    final pattern = raw.map((e) => int.tryParse(e) ?? 0).where((e) => e > 0).toList();
-
-    if (await Vibration.hasVibrator() == true) {
-      if (pattern.isNotEmpty) {
-        final withPauses = <int>[0];
-        for (final ms in pattern) {
-          withPauses.add(ms);
-          withPauses.add(150);
-        }
-        withPauses.removeLast();
-        Vibration.vibrate(pattern: withPauses);
-      } else {
-        Vibration.vibrate(pattern: [0, 500, 150, 500]);
-      }
-    }
-
-    Future.delayed(const Duration(seconds: 4), () {
-      if (!isClosed) {
-        if (_speech.isListening) {
-           add(UpdateMessage('Actively listening...'));
-        } else {
-           add(StartListening());
-        }
-      }
-    });
+    // Handled by background service isolate passing synced history
   }
 }
