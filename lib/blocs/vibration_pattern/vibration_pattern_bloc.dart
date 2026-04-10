@@ -47,13 +47,7 @@ class VibrationPatternBloc extends Bloc<VibrationPatternEvent, VibrationPatternS
   Future<void> _onTestPattern(TestPattern event, Emitter<VibrationPatternState> emit) async {
     final supported = await Vibration.hasVibrator();
     if (supported == true && state.pattern.isNotEmpty) {
-      final formattedPattern = [0];
-      for (final ms in state.pattern) {
-        formattedPattern.add(ms);
-        formattedPattern.add(150);
-      }
-      formattedPattern.removeLast();
-
+      final formattedPattern = [0, ...state.pattern];
       Vibration.vibrate(pattern: formattedPattern);
     }
   }
