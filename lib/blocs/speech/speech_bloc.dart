@@ -75,7 +75,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
     } else if (status.isPermanentlyDenied) {
       emit(state.copyWith(
           isMicAvailable: false,
-          detectionMessage: "Microphone permssion denied.\nPlease check settings."));
+          detectionMessage: "Microphone permission denied.\nPlease check settings."));
       await openAppSettings();
     } else {
       emit(state.copyWith(
@@ -86,7 +86,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
   Future<void> _onStartListening(
       StartListening event, Emitter<SpeechState> emit) async {
-    if (!_speech.isAvailable || state.isMicAvailable == false || state.isPaused) return;
+    if (!_speech.isAvailable || !state.isMicAvailable || state.isPaused) return;
     
     // Force a cleanup if it thinks it's already listening to prevent permanent hang
     if (_speech.isListening) {
@@ -170,7 +170,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
       if (newHistory.isEmpty || now.difference(_lastFinalizeTime).inSeconds > 3) {
         newHistory.add(state.currentTranscript);
       } else {
-        newHistory[newHistory.length - 1] = newHistory.last + " " + state.currentTranscript;
+        newHistory[newHistory.length - 1] = '${newHistory.last} ${state.currentTranscript}';
       }
 
       _lastFinalizeTime = now;
@@ -191,7 +191,7 @@ class SpeechBloc extends Bloc<SpeechEvent, SpeechState> {
 
     if (await Vibration.hasVibrator() == true) {
       if (pattern.isNotEmpty) {
-        final withPauses = [0];
+        final withPauses = <int>[0];
         for (final ms in pattern) {
           withPauses.add(ms);
           withPauses.add(150);
