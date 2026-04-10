@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
             );
           }
           return MaterialApp(
-            title: 'Hear Vibe',
+            title: 'Vibe Hear',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
