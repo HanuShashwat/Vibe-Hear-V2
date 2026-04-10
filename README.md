@@ -2,7 +2,7 @@
 
 > **Feel the Sound, Stay Connected.**
 
-**Vibe Hear** is a philanthropic, offline, assistive Android application designed for the Deaf and hard-of-hearing community. It transforms spoken words—such as emergency keywords or a user's name—into customizable vibration alerts, ensuring users stay aware of their surroundings without relying on hearing.😊
+**Vibe Hear** is a philanthropic, offline-capable, assistive Android application designed for the Deaf and hard-of-hearing community. It transforms spoken words—such as emergency keywords or a user's name—into customizable vibration alerts, ensuring users stay aware of their surroundings without relying on hearing.😊
 
 ---
 
@@ -10,7 +10,7 @@
 - [About the Project](#-about-the-project)
 - [Key Features](#-key-features)
 - [How It Works](#-how-it-works)
-- [Privacy & Offline Capability](#-privacy--offline-capability)
+- [Privacy & Background Execution](#-privacy--background-execution)
 - [Tech Stack](#-tech-stack)
 - [Installation & Setup](#-installation--setup)
 - [Usage Guide](#-usage-guide)
@@ -28,28 +28,30 @@ The application focuses heavily on **accessibility**, **simplicity**, and **priv
 
 ## ✨ Key Features
 
-* **🎙️ Smart Keyword Detection:** Continuously listens for specific phrases (e.g., "Emergency", "Come Here", "Help Me") using on-device processing.
+* **🎙️ Smart Keyword Detection:** Continuously listens for specific phrases (e.g., "Emergency", "Come Here", "Help Me") using native on-device Speech-to-Text processing.
 * **📳 Customizable Vibration Patterns:** Users can design unique vibration rhythms for each keyword (e.g., *Short-Short-Long* for "Emergency") to instantly recognize what is being said without looking at the phone.
-* **🔒 100% Offline:** Does not require an internet connection to function.
+* **⚡ True Background Execution:** Operates seamlessly even when the phone is locked or minimized using Android Foreground Services.
+* **🔕 Quick Action Mute:** Mute or unmute the microphone directly from the persistent Android notification tray on the go.
 * **👤 Personalization:** Stores user details (Name, Nickname) locally to personalize the experience.
-* **🛡️ Privacy First:** No audio is recorded or uploaded to the cloud. All processing happens locally on the device.
+* **🛡️ Privacy First:** No audio is recorded or uploaded to the cloud. All audio parsing and trigger matching happens locally.
 
 ---
 
 ## ⚙️ How It Works
 
-1.  **Microphone Access:** The app listens to the environment using the device microphone.
-2.  **Keyword Matching:** It uses the **Porcupine** wake word engine to detect pre-trained keywords in real-time.
-3.  **Haptic Feedback:** Once a keyword is detected, the app triggers the vibration motor with the specific pattern assigned to that word.
+1.  **Microphone Access:** The app securely requests access to the device microphone.
+2.  **Continuous Background Listening:** It runs a persistent background isolate that translates speech to text continuously.
+3.  **Keyword Matching:** It matches the spoken text against the user's enabled Trigger Words.
+4.  **Haptic Feedback:** Once a keyword is matched, the background engine instantly triggers the vibration motor with the specific pattern assigned to that word.
 
 ---
 
-## 🔒 Privacy & Offline Capability
+## 🔒 Privacy & Background Execution
 
 We care deeply about privacy.
 * **No Data Collection:** Vibe Hear does not collect, store, or share personal information.
-* **No Internet Needed:** The app functions entirely in offline mode.
-* **Local Storage:** Settings and preferences are saved securely on the device using `SharedPreferences`.
+* **Microphone Transparency:** While active, android natively displays a microphone icon. You can always mute the app internally via the Background Notification.
+* **Local Storage:** Settings, transcripts, and preferences are saved securely on the device using `SharedPreferences`.
 
 ---
 
@@ -57,10 +59,11 @@ We care deeply about privacy.
 
 * **Framework:** [Flutter](https://flutter.dev/) (SDK ^3.8.0)
 * **Language:** Dart
-* **Wake Word Engine:** [Porcupine Flutter](https://pub.dev/packages/porcupine_flutter)
+* **Architecture:** BLoC (Business Logic Component) via `flutter_bloc`
+* **Speech Engine:** [Speech To Text](https://pub.dev/packages/speech_to_text)
+* **Background Process:** [Flutter Background Service](https://pub.dev/packages/flutter_background_service)
 * **Haptics:** [Vibration](https://pub.dev/packages/vibration)
 * **Local Storage:** [Shared Preferences](https://pub.dev/packages/shared_preferences)
-* **Navigation:** [Google Nav Bar](https://pub.dev/packages/google_nav_bar)
 
 ---
 
@@ -70,12 +73,12 @@ Follow these steps to run the project locally.
 
 ### Prerequisites
 * **Flutter SDK** installed on your machine.
-* **Android/iOS Device** (Physical device recommended for testing vibration and microphone).
+* **Android Device** (Physical device highly recommended for testing background foreground services and vibration motors).
 
 ### Steps
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/YourUsername/Hear_Vibe.git](https://github.com/YourUsername/Hear_Vibe.git)
+    git clone https://github.com/YourUsername/Hear_Vibe.git
     cd Hear_Vibe
     ```
 
@@ -96,16 +99,13 @@ Follow these steps to run the project locally.
 ## 📱 Usage Guide
 
 ### 1. Initial Setup
-On the first launch, you will be greeted by the Intro screen. Click **Get Started** and enter your:
-* **First Name** & **Last Name** (Required)
-* **Middle Name** & **Nick Name** (Optional)
-This creates your local profile.
+On the first launch, you will be greeted by the Intro screen. Click **Get Started** and enter your local profile details.
 
 ### 2. Dashboard (Home)
 The app consists of three main tabs:
-1.  **Home:** View the active status of the app.
-2.  **Vibration (Trigger Words):** The core configuration screen.
-3.  **Transcript:** (Feature in development) View history of detected sounds.
+1.  **Home:** View live active status and application states.
+2.  **Vibration (Trigger Words):** Add dynamic trigger phrases and configure their vibration rhythms.
+3.  **Transcript:** View a real-time transcript history generated seamlessly by the background listening service.
 
 ### 3. Configuring Vibrations
 1.  Navigate to the **Vibration Page** (middle tab).
@@ -115,12 +115,7 @@ The app consists of three main tabs:
     * Enter a duration in milliseconds (e.g., `500`) and tap `+`.
     * Add multiple durations to create a pattern (e.g., 500ms ON, pause, 200ms ON).
     * Tap **Test** to feel the pattern.
-    * Tap **Save** to apply it.
-
-### 4. Settings
-Access the side menu (Drawer) to find **Settings**. Here you can:
-* Reset Vibration Patterns.
-* Clear All App Data (Danger Zone).
+    * Tap **Save** to apply it securely.
 
 ---
 
@@ -137,5 +132,3 @@ This project was brought to life by a dedicated team of developers and designers
 ---
 
 *This application is a prototype developed for educational purposes.*
-
-```
