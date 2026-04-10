@@ -11,9 +11,11 @@ import 'package:vibehear/blocs/trigger_words/trigger_words_bloc.dart';
 import 'package:vibehear/blocs/trigger_words/trigger_words_event.dart';
 import 'package:vibehear/blocs/speech/speech_bloc.dart';
 import 'package:vibehear/blocs/speech/speech_event.dart';
+import 'package:vibehear/services/background_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeBackgroundService();
   runApp(const MyApp());
 }
 
